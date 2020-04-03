@@ -1,0 +1,249 @@
+---
+title: "Rfishpop (Third tutorial)"
+author: "Marta Cousido Rocha"
+date: "24/2/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Population dynamic tools in support of fisheries managment
+
+
+Once a population is simulated we need to compute several measures on it to know in which status is the stock. In this tutorial we are going to learn how to compute the biomass-per-Recruit, yield-per-Recruit,  total Yield, Biomass and Recruitment in equilibrium, and Reference Fishery Mortalities.
+
+### Biomass-per-Recruit (BPR function)
+
+
+The function *BPR* returns biomass-per-Recruit for each iteration. The arguments of the function are the following.  
+
+
+- *Pop.Mod*	is the object returned by Population.Modeling function (main function).
+
+- *f.grid*	is a sequence of *f's* which are the annual components of fishing mortality $F = f * SEL$.
+
+- *Fish.years*	is the number of recent years to estimate the mean of SEL (selectivity).
+
+- *Bio.years*	is the number of recent years to estimate the mean of M, W and Mat (natural mortality, weight and maturity).
+
+- *plot*	is a vector of two elements. The first one is a logical parameter. By default is equal to TRUE, which means that a biomass per recruit graph is done. The second element refers to which iteration must be plotted.
+
+- *Method*	is the procedure to obtain the age vector of weight, natural mortality, selectivity and maturity. By default is "mean" which means that the mean of the last "Bio.years or "Fish.years" is used. The alternative option is "own", the user can introduce these elements.
+
+- *par*	If Method="own" it is a list containing the matrices whose columns report for each iteration the age vector of weight, natural mortality, selectivity and maturity. In other case is equal to NULL.
+
+The result is an array whose third dimension corresponds to the iterations. For each iteration the array contains a matrix reporting the biomass-per-recruit for a range of overall fishing mortalities.
+
+First of all we need to simulate our population using Population.Modeling function. 
+
+
+```{r}
+library(Rfishpop)
+ctrPop<-list(years=seq(1980,2020,by=1),niter=2,N0=10000,ages=0:15,minFage=4,
+             maxFage=7,ts=0,tc=0.5,tseed=NULL)
+
+number_ages<-length(ctrPop$ages);number_years<-length(ctrPop$years)
+M<-matrix(rep(0.4,number_ages*number_years),ncol = number_years)
+colnames(M)<-ctrPop$years
+rownames(M)<-ctrPop$ages
+ctrBio<-list(M=M,CV_M=0.2, L_inf=124.5, t0=0, k=0.164, CV_L=0.2, CV_LC=0.2, a=4.5*10^(-6), b=3.1049,
+             a50_Mat=3, ad_Mat=-0.5,CV_Mat=0.2)
+
+
+ctrSEL<-list(type="Logistic", par=list(a50_Sel=1.5, ad_Sel=-1),CV_SEL=0.2)
+
+
+f=rep(0.5,number_years)
+ctrFish<-list(f=f,ctrSEL=ctrSEL)
+
+
+
+a_BH=10000; b_BH=400; CV_REC_BH=0.2
+
+SR<-list(type="BH",par=c(a_BH,b_BH,CV_REC_BH))
+
+Pop.Mod<-Population.Modeling(ctrPop=ctrPop,ctrBio=ctrBio,ctrFish=ctrFish,SR=SR)
+
+```
+
+Now, we can use the *BPR* function to obtain the  biomass-per-recruit for a range of overall fishing mortalities.
+
+
+```{r}
+f.grid<-seq(0.00,0.5,by=0.01)
+bpr<-BPR(Pop.Mod,f.grid,Bio.years=3,Fish.years=3,plot=c(TRUE,1),Method="mean",par=NULL)
+head(bpr[,,1])
+```
+
+Note that f.grid is a sequence of fishing efforts that the user must be defined. In this case we have introduced a grid from 0 to 0.5 such that two consecutive points are separated by 0.01.
+
+If we want to use *Method="own"* we need to specify in argument *par* the required vectors. This must be  something like (assuming that W, WC, M,
+ Mat and SEL are defined previously).
+ 
+```{r eval=FALSE} 
+par=list(); par$W<-W; par$SEL<-SEL; par$Mat<-Mat; par$M<-M
+BPR(Pop.Mod,f.grid,3,3,plot=c(TRUE,1),Method="own",par=list(W=W,Mat=Mat,M=M,s=s))
+```
+
+### Yield-per-Recruit (YPR function) 
+
+
+
+The function *YPR* returns yield-per-Recruit for each iteration. Almost all of the arguments of this function have been explained above in *BPR* function. Except the following argument which must be described again due to a slightly adjustment.
+
+- *Bio.years* is the number of recent years to estimate the mean of M and WC (natural mortality and capture weight).
+
+The result is an array whose third dimension corresponds to the iterations. For each iteration the array contains a matrix reporting the yield-per-recruit for a range of overall fishing mortalities.
+
+
+The following lines of code allow  us to compute the yield-per-Recruit for each iteration. 
+
+
+```{r}
+ypr<-YPR(Pop.Mod,f.grid,3,3,plot=c(TRUE,1), Method="mean",par=NULL)
+head(ypr[,,1])
+```
+
+
+### Total Yield, Biomass and Recruiment in Equilibrium (BYR.eq function)
+
+
+The BYR.eq function returns total Yield, Biomass and Recruiment in equilibrium for the corresponding fishing efforts and fishing mortalies. Furthermore, for each case the function also returns the corresponding biomass-per-recruit and yield-per-recruit. Furthermore, the function also reports the population size in equilibrium for each age and fidhing mortality.
+
+
+The arguments of this function have been explained above in the YPR and BPR functions. The argument *Bio.years* is adjusted according to its use in the BYR.eq function.
+
+- *Bio.years*	is the number of recent years to estimate the mean of M, Mat, WC, and W (natural mortality, maturity, stock weight and capture weight).
+
+
+The result is a list of two elements:
+
+- *N* 	an array whose third dimension is the number of iterations. For each iteration it reports a matrix containing the population size in equilibrium for each age.
+
+- *DPM*	an array whose third dimension is the number of iterations. For each iteration it reports a matrix containing the total biomass in equilibrium, total yield in equilibrium, total recruitment in equilibrium, biomass-per-recruit, and yield-per-recruit for a range of overall fishing mortalities.
+
+
+
+The following lines of code show how to use the BYR.eq function.
+
+
+```{r}
+RE<-BYR.eq(Pop.Mod,f.grid,3,3,FALSE,Method="mean",par=NULL)
+N_eq<-RE$N
+DPM<-RE$DPM
+### First iteration
+head(DPM[,,1])
+### Second iteration
+head(DPM[,,2])
+
+```
+
+
+### Reference Fishery Mortalities (RF function)
+
+
+The function *RF* returns the reference fishery mortality which produces maximum YPR, the reference fishery mortality at which the slope of the YPR curve is reduced to 0.1 of that estimated at the origin and the reference fishery mortality at which the MSY is attained. Furthermore for each of these fishery mortalities the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium is also returned. 
+
+It is important to mention that if the fishing effort is equal to 10 can be that optimize process had not found the correct value in the default sequence.
+
+
+Some arguments coincide with those of BPR, YPR and BYR.eq functions, to avoid redundancy we focus on the new arguments. 
+
+- *Bio.years* is the number of recent years to estimate the mean of M, Mat, WC, and W (natural mortality, maturity, stock weight and capture weight).
+
+- *FM_type*	established which of the three reference fishery mortalities must be computed. The possibilities have been described above: FM_type="F_max", FM_type="F_0.1" and FM_type="F_msy".
+
+- *iters* is a  vector containing the iteration for which the reference fishery mortalities must be computed.
+
+
+The results depend on the selection done in *FM_type*.
+
+- *F_max*	is the value of F that produces maximum YPR with the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium.
+
+- *F_0.1* is	the value of F at which the slope of the YPR curve is reduced to 0.1 of that estimated at the origin with the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium.
+
+- *F_msy* is  the value of F at which the MSY is attained with the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium.
+
+
+The following lines of code allow us to compute the three reference mortalities for the two interactions.
+
+```{r}
+a=RF(Pop.Mod, 3,3,Method="mean",par=NULL,FM_type="F_max",iters=1:2)
+RF(Pop.Mod, 3,3,Method="mean",par=NULL,FM_type="F_0.1",iters=1:2)
+RF(Pop.Mod, 3,3,Method="mean",par=NULL,FM_type="F_msy",iters=1:2)
+```
+
+
+This function is time demanding due to the necessary optimization process. For this reason when we desire to compute for example the reference fishery mortalities for 1000 iterations we need to wait approximately 6 min. Internally, the function divide the work in block of 20 iterations and then start the process to compute the reference mortalities. An alternative is to use the function RF_U  which is equivalent to the RF function but instead of dividing the 1000 iterations in blocks of 20 inside of the function we do this previously before to call the function. This alternative is faster, in 3 minutes approximately we have the results for 1000 iterations. Below we provide the code for both options for FM_type="F_max".
+
+```{r}
+
+ctrPop<-list(years=seq(1980,2020,by=1),niter=1000,N0=10000,ages=0:15,minFage=4,
+             maxFage=7,ts=0,tc=0.5,seed=NULL)
+
+
+number_ages<-length(ctrPop$ages);number_years<-length(ctrPop$years)
+M<-matrix(rep(0.4,number_ages*number_years),ncol = number_years)
+colnames(M)<-ctrPop$years
+rownames(M)<-ctrPop$ages
+ctrBio<-list(M=M,CV_M=0.01, L_inf=124.5, t0=0, k=0.164, CV_L=0, CV_LC=0, a=4.5*10^(-6), b=3.1049,
+             a50_Mat=3, ad_Mat=-0.5,CV_Mat=0)
+
+
+ctrSEL<-list(type="Logistic", par=list(a50_Sel=1.5, ad_Sel=-1),CV_SEL=0)
+
+f=rep(0.5,number_years)
+ctrFish<-list(f=f,ctrSEL=ctrSEL)
+
+a_RK=10; b_RK=0.0002; CV_REC_RK=0
+
+SR<-list(type="RK",par=c(a_RK,b_RK,CV_REC_RK))
+
+Pop.Mod<-Population.Modeling(ctrPop=ctrPop,ctrBio=ctrBio,ctrFish=ctrFish,SR=SR)
+
+
+```
+
+
+```{r, eval=FALSE}
+start_time <- Sys.time()
+RF(Pop.Mod, 3,3,Method="mean",par=NULL,FM_type="F_max",iters=1:1000)
+end_time <- Sys.time()
+
+```
+
+end_time-start_time
+Time difference of 6.354276 mins
+
+
+```{r, eval=FALSE}
+library(abind)
+
+start_time <- Sys.time()
+
+n<-1000
+block<-n%/%20
+seq1<-c(0,(1:(block-1))*20)+1
+seq2<-seq(20,n,by=20)
+ll<-length(seq1)
+Resul<-array(0,dim=c(1,7,n))
+Pop.Mod2<-Pop.Mod
+for(i in 1:ll){
+  Pop.Mod2$Matrices$N<-Pop.Mod$Matrices$N[,,seq1[i]:seq2[i]]
+  Pop.Mod2$Matrices$F<-Pop.Mod$Matrices$F[,,seq1[i]:seq2[i]]
+  Pop.Mod2$Matrices$M<-Pop.Mod$Matrices$M[,,seq1[i]:seq2[i]]
+  Pop.Mod2$Matrices$W<-Pop.Mod$Matrices$W[,,seq1[i]:seq2[i]]
+  Pop.Mod2$Matrices$Mat<-Pop.Mod$Matrices$Mat[,,seq1[i]:seq2[i]]
+  Pop.Mod2$Matrices$C_N<-Pop.Mod$Matrices$C_N[,,seq1[i]:seq2[i]]
+  Pop.Mod2$Matrices$C_W<-Pop.Mod$Matrices$C_W[,,seq1[i]:seq2[i]]
+  Resul[,,seq1[i]:seq2[i]]<-RF_U(Pop.Mod2, 3,3,Method="mean",par=NULL,FM_type="F_max",iters =1:20)
+}
+
+end_time <- Sys.time()
+
+```
+end_time-start_time
+Time difference of 3.816937 mins
+

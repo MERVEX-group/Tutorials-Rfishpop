@@ -1,0 +1,386 @@
+---
+title: "Rfishpop (Second tutorial)"
+author: "Marta Cousido Rocha"
+date: "24/2/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Population dynamic tools in support of fisheries managment
+
+
+In the previous tutorial (Rfishpop (first tutorial)) we have explained  how to simulate the real dynamics of the fishery system using the **generic operating model (OM)** implemented in Population.Modeling function. Now, we are going to explain the functions which allow us to make a "sampling" from the simulated population, this is, we can obtain biomass and stock or capture length samples. The three functions are explained in detail below. Finally, we also introduce a function to computes indices of abundance and biomass.
+
+
+
+
+### Sampling biomass at each year (Sampling_Biomass function)
+
+
+For different applications can be interesting to make a sample from the corresponding biomass of the simulated population. The function *Sampling_Biomass* returns a desired number of biomass samples.
+
+
+The arguments of this function are the following:
+
+- *Pop.Mod* is the object returned by Population.Modeling function.
+
+- *CV* is the coefficient of variation. Default value 0, which means that the function returns the biomass computed in the main function of the package, NOT a sample.
+
+- *niter_sampling* is the number of samples to be computed if the Pop.Mod object refers to a deterministic framework, this is, niter=1. If such object is stochastic (niter>1) for each iteration one sample is computed and hence a value of this parameter is not required.
+
+The result is an array containing the samples of the total biomass for each year. The number of samples is equal to niter_sampling in the deterministic framework and to niter in the stochastic one.
+
+
+Is is important to mention how the biomass samples are computed. A log-normal distribution is used to compute the biomass samples. More precisely, for each year and iteration the value of the biomass in the sample comes from a log-normal distribution centered in the corresponding value of biomass and variability determined by CV.
+
+
+Below, we use the function *Population.Modeling* to simulate a population from which the biomass samples will be extracted using *Sampling_Biomass*. We start simulating a deterministic framework, this is, niter=1.
+
+```{r}
+library(Rfishpop)
+
+ctrPop<-list(years=seq(1980,2020,by=1),niter=1,N0=10000,ages=0:15,minFage=4,
+             maxFage=7,ts=0,tc=0.5,tseed=NULL)
+
+
+number_ages<-length(ctrPop$ages);number_years<-length(ctrPop$years)
+M<-matrix(rep(0.4,number_ages*number_years),ncol = number_years)
+colnames(M)<-ctrPop$years
+rownames(M)<-ctrPop$ages
+ctrBio<-list(M=M,CV_M=0, L_inf=124.5, t0=0, k=0.164, CV_L=0, CV_LC=0, a=4.5*10^(-6), b=3.1049,
+             a50_Mat=3, ad_Mat=-0.5,CV_Mat=0)
+
+
+ctrSEL<-list(type="Logistic", par=list(a50_Sel=1.5, ad_Sel=-1),CV_SEL=0)
+
+
+f=rep(0.5,number_years)
+ctrFish<-list(f=f,ctrSEL=ctrSEL)
+
+
+a_BH=10000; b_BH=400; CV_REC_BH=0
+SR<-list(type="BH",par=c(a_BH,b_BH,CV_REC_BH))
+
+Pop.Mod<-Population.Modeling(ctrPop=ctrPop,ctrBio=ctrBio,ctrFish=ctrFish,SR=SR)
+```
+
+
+First, if we only desire to obtain the biomass corresponding to the simulated population (NOT a sample) the code below allow us to do that.
+
+```{r}
+B<-Sampling_Biomass(Pop.Mod,CV=0)
+B
+
+BIO<-Sum.Pop.Mod(Pop.Mod,c("BIO"))
+BIO
+
+plot(B, type="b", pch=19, col="red", xlab="Years", ylab="Biomass",main="Sample biomass for niter=1 and CV=0")
+# Add a line
+lines(BIO$BIO[,,1], pch=18, col="blue", type="b", lty=2)
+# Add a legend
+legend("topleft", legend=c("Sampling_Biomass", "Sum.Pop.Mod"),
+       col=c("red", "blue"), lty=1:2, cex=0.8)
+```
+
+We have checked that the result reported by *Sampling_Biomass* when the CV=0 and niter=1 matches the one reported by *Sum.Pop.Mod* (both lines in the graph are overlapping).
+
+On the other hand, if we desire to obtain biomass samples in the deterministic framework, we must  specified a CV different than 0 and the desired number of samples in the argument niter_sampling.
+
+```{r}
+B<-Sampling_Biomass(Pop.Mod,CV=0.2,niter_sampling=1000)
+```
+
+If we compute the mean of the above 1000 biomass samples this must be close to the biomass of the original simulated population.
+
+```{r}
+MEAN_BIO<-apply(B, c(1,2), mean)
+MEAN_BIO
+
+BIO
+
+plot(as.numeric(MEAN_BIO), type="b", pch=19, col="red", xlab="Years", ylab="Biomass",main="Sample biomass for niter=1, CV=0.2 and niter_sampling=1000")
+# Add a line
+lines(BIO$BIO[,,1], pch=18, col="blue", type="b", lty=2)
+# Add a legend
+legend("topleft", legend=c("MEAN_BIO", "BIO"),
+       col=c("red", "blue"), lty=1:2, cex=0.8)
+
+```
+
+In the graph we can see that the mean of the 1000 biomass samples fluctuates near to the original biomass values.
+
+
+Now, we can see how to use this function in the stochastic framework. For this it is necessary to define again a Pop.Mod with niter greater than 1. Since this is a toy example we use niter=2.
+
+
+```{r}
+library(Rfishpop)
+
+ctrPop<-list(years=seq(1980,2020,by=1),niter=2,N0=10000,ages=0:15,minFage=4,
+             maxFage=7,ts=0,tc=0.5,tseed=NULL)
+
+
+number_ages<-length(ctrPop$ages);number_years<-length(ctrPop$years)
+M<-matrix(rep(0.4,number_ages*number_years),ncol = number_years)
+colnames(M)<-ctrPop$years
+rownames(M)<-ctrPop$ages
+ctrBio<-list(M=M,CV_M=0, L_inf=124.5, t0=0, k=0.164, CV_L=0.05, CV_LC=0, a=4.5*10^(-6), b=3.1049,
+             a50_Mat=3, ad_Mat=-0.5,CV_Mat=0)
+
+
+ctrSEL<-list(type="Logistic", par=list(a50_Sel=1.5, ad_Sel=-1),CV_SEL=0)
+
+
+f=rep(0.5,number_years)
+ctrFish<-list(f=f,ctrSEL=ctrSEL)
+
+
+a_BH=10000; b_BH=400; CV_REC_BH=0
+SR<-list(type="BH",par=c(a_BH,b_BH,CV_REC_BH))
+
+Pop.Mod<-Population.Modeling(ctrPop=ctrPop,ctrBio=ctrBio,ctrFish=ctrFish,SR=SR)
+```
+
+As, in the deterministic framework if CV=0 we obtain the original biomass of the population created using the main function (Population.Modeling).
+
+```{r}
+B<-Sampling_Biomass(Pop.Mod,CV=0)
+B
+
+BIO<-Sum.Pop.Mod(Pop.Mod,c("BIO"))
+BIO
+
+
+```
+
+On the other hand, if we introduce a CV greater than 0 in the stochastic framework we obtain for each iteration (in this case two) a biomass sample. 
+
+
+```{r}
+B<-Sampling_Biomass(Pop.Mod,CV=0.10)
+B
+
+BIO<-Sum.Pop.Mod(Pop.Mod,c("BIO"))
+BIO
+
+
+plot(B[,,1], type="b", pch=19, col="red", xlab="Years", ylab="Biomass",main="Sample biomass for niter=1, CV=0.10",ylim=c(3000,6000))
+# Add a line
+lines(BIO$BIO[,,1], pch=18, col="blue", type="b", lty=2)
+# Add a legend
+legend("topleft", legend=c("BIO sample", "BIO"),
+       col=c("red", "blue"), lty=1:2, cex=0.8)
+plot(B[,,2], type="b", pch=19, col="red", xlab="Years", ylab="Biomass",main="Sample biomass for niter=2, CV=0.10",ylim = c(3000,6000))
+# Add a line
+lines(BIO$BIO[,,2], pch=18, col="blue", type="b", lty=2)
+# Add a legend
+legend("topleft", legend=c("BIO sample", "BIO"),
+       col=c("red", "blue"), lty=1:2, cex=0.8)
+```
+
+We can see above the variability of the biomass samples around the original population biomass.
+
+
+
+
+### Distribution length (Distribution.length function)
+
+Length samples are also necessary in some analysis. A previous step to implement a sampling length function is the 
+*Distribution.length* function which returns the stochastic length distribution of the stock or length captures distribution for each year and iteration. Then from such distribution the samples are generated.
+
+
+The arguments of this function are:
+
+- *Pop.Mod* is the object returned by Population.Modeling function.
+
+
+- *CV* 	is the coefficient of variation associated to the log-normal distribution. In the case of the stock length distribution it is computed generating for each age, year and iteration random values from a log-normal distribution centered in the corresponding stock length and whose variability comes from the given CV. The number of values generated in each case is determined by the population size N. Whereas for the captures length distribution the mean of the log-normal distribution is given by the corresponding capture length, and the number of random values is given by the corresponding number of captures, C.
+
+
+- *Type* is an indicator of which distribution length must be computed, length stock distribution (Type="LengthS") or length captures distribution (Type="LengthC").
+
+- *scale*	 A rescale parameter, the matrix N (Type="LengthS") or C (Type="LengthC") is divided by this value to avoid large times of computation. This is, the number of values generated in each case is determined by the population size N/scale or by C/scale. If we don't need this argument we can use scale=NULL.
+
+The result is an array whose third dimension is the number of iterations, and the second one is the different years. Hence each column contains the distribution length (stock or captures) for each year.
+
+
+We obtain the stock distribution length as follows.
+
+
+```{r}
+L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthS",scale=NULL)
+```
+
+
+We can check the distribution length for each iteration and year. For example, below we explore iteration 1 and year 1980.
+
+```{r}
+L.D[,,1][,1]
+plot(L.D[,,1][,1], type="b", pch=19, col="red", xlab="", ylab="",main = "Distribution of stock length year 1980 iteration 1")
+LS<-Sum.Pop.Mod(Pop.Mod,c("LS"))
+```
+
+Using the above lines of code only changing Type="LengthS" by Type="LengthC" we obtain the distribution of capture length.
+
+```{r}
+L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthC",scale=NULL)
+```
+```{r}
+L.D[,,1][,1]
+plot(L.D[,,1][,1], type="b", pch=19, col="red", xlab="", ylab="",main = "Distribution of capture length year 1980 iteration 1")
+LC<-Sum.Pop.Mod(Pop.Mod,c("LC"))
+```
+Note that in this case the stock length is at January and the capture length at June. You can change these time moments using ts and tc parameters as follows. 
+
+
+
+```{r}
+ctrPop<-list(years=seq(1980,2020,by=1),niter=2,N0=10000,ages=0:15,minFage=4,
+             maxFage=7,ts=0.5,tc=0,tseed=NULL)
+
+Pop.Mod<-Population.Modeling(ctrPop=ctrPop,ctrBio=ctrBio,ctrFish=ctrFish,SR=SR)
+```
+
+```{r}
+L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthS",scale=NULL)
+```
+
+
+```{r}
+plot(L.D[,,1][,1], type="b", pch=19, col="red", xlab="", ylab="",main = "Distribution of stock length year 1980 iteration 1 at 1st of June")
+LS<-Sum.Pop.Mod(Pop.Mod,c("LS"))
+```
+
+
+```{r}
+L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthC",scale=NULL)
+```
+```{r}
+plot(L.D[,,1][,1], type="b", pch=19, col="red", xlab="", ylab="",main = "Distribution of capture length year 1980 iteration 1 at 1st of January ")
+LC<-Sum.Pop.Mod(Pop.Mod,c("LC"))
+```
+
+
+### Sampling length (Sampling_length function)
+
+Once we have obtained the distribution length we can continue and sampling from such distribution. The *Sampling_length* function returns a sample of the stock or capture length from the corresponding distribution computed using Distribution.length function. More precisely, the function returns a length sample (stock or capture) generating random values from the computed length distribution function.
+
+
+
+The arguments of the function are:
+
+- *L.D*	is the distribution length returned by Distribution.length function.
+
+- *sample.size*	is the sample size of the desired sample.
+
+The result is an array containing in each column the corresponding length sample for each iteration (third dimension).
+
+```{r}
+ctrPop<-list(years=seq(1980,2020,by=1),niter=2,N0=10000,ages=0:15,minFage=4,
+             maxFage=7,ts=0,tc=0.5,tseed=NULL)
+
+Pop.Mod<-Population.Modeling(ctrPop=ctrPop,ctrBio=ctrBio,ctrFish=ctrFish,SR=SR)
+```
+
+```{r}
+L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthC",scale=NULL)
+our.sample<-Sampling_length(L.D,sample.size=100)
+plot(our.sample[,1,1],type="b", pch=19, col="red", xlab="Index", ylab="Capture length",main = "Sample capture length year 1980 iteration 1")
+```
+
+
+
+
+### Index of biomass and abundance (Sampling_Survey)
+
+This function returns the index of abundance for each year, age and iteration, and the index of biomass for each year and iteration. The biomass index for year t, when the corresponding coefficient of variation is 0, is
+
+$$IB_{t}={q_B}_t*BIO_t^{\gamma}$$
+
+where ${q_B}_t$ is the catchability coefficient for year t and $BIO_t$ is the biomass for year t. If CV is different than 0 the biomass index for year t is
+
+$${IB}_t={q_B}_t*BIO_t^{\gamma}*\epsilon_t$$
+
+where ${q_B}_t$ is the catchability coefficient, $BIO_t$ is the biomass for year t, and $\epsilon_t$ is the residual generated from a log normal distribution center in zero and whose variability determined for the corresponding coefficient of variation. The abundance index for year t and age i, when the corresponding coefficient of variation is 0, is
+
+$${IA}_{it}={q_A}_{it}*N_{it}^{\gamma}$$
+
+where ${q_A}_{it}$ is the catchability coefficient and $N_{it}$ is the abundance for year t and age i. If CV is different than 0 the abundance index for year t and age i is
+
+$${IA}_{it}={q_A}_{it}*N_{it}^{\gamma}*\epsilon_{it}$$
+
+where  ${q_A}_{it}$ is the catchability coefficient, $N_{it}$ is the abundance for year t and age i, and $\epsilon_{it}$ is the residual generated from a log normal distribution center in zero and variability determined for the corresponding CV.
+
+The arguments of this function are:
+
+- *Pop.Mod*	A list containing the components returned by Population.Modeling function (main function).
+
+- *type*	indices type which can be "biomass" or "abundance".
+
+- *par*	list of the parameters required of computed the selected index.
+
+    -- type="biomass":
+
+    *q_B* which is the vector of annual catchability coefficients.
+
+    *gamma* which is the density dependent parameter.
+
+    *CV* which is the biomass coefficient of variation. Default value 0.
+
+  -- type="abundance":
+
+  *q_A* which is the matrix of annual and age specific catchability coefficients.
+
+  *gamma* which is the density dependent parameter.
+
+  *CV* which is the biomass coefficient of variation. Default value 0.
+
+The result of this function is an array containing the indices of abundance for each year, age, and iteration if "type=abundance" or the indices of biomass for each year and iteration if "type=biomass".
+
+
+Now,we can compute the index of abundance or biomass. Below we provide the code for computing the biomass index.
+
+```{r}
+q_B<-rep(0.01,41);gamma<-1;CV<-0.1; par<-list(q_B,gamma,CV)
+I<-Sampling_Survey(Pop.Mod,type="biomass",par=par)
+```
+
+We can plot the index of biomass for the first iteration.
+
+```{r}
+years=seq(1980,2020,by=1)
+plot(years,I[,,1],type="b", pch=19, col="red", xlab="Years", ylab="Biomass Index",main = "Biomass Index iteration 1")
+q_B<-rep(0.01,41);gamma<-1;CV<-0; par<-list(q_B,gamma,CV)
+I_original<-Sampling_Survey(Pop.Mod,type="biomass",par=par)
+# Add a line
+lines(years,I_original[,,1], pch=18, col="blue", type="b", lty=2)
+# Add a legend
+legend("topright", legend=c("Sample", "Original"),
+       col=c("red", "blue"), lty=1:2, cex=0.8)
+
+```
+
+Similar code provide the abundance index.
+```{r}
+q_A<-matrix(0.2,ncol=41,nrow=16);gamma<-1;CV<-0.4; par<-list(q_A,gamma,CV)
+I<-Sampling_Survey(Pop.Mod,type="abundance",par=par)
+```
+
+We can plot the index of abundance for the first iteration.
+
+```{r}
+
+q_A<-matrix(0.2,ncol=41,nrow=16);gamma<-1;CV<-0; par<-list(q_A,gamma,CV)
+I_original<-Sampling_Survey(Pop.Mod,type="abundance",par=par)
+plot(0:15,I[,1,1],type="b", pch=19, col="red", xlab="Years", ylab="Abundance Index",main = "Abundance Index year 1980 iteration 1",ylim=c(0,max(c(I[,1,1],I_original[,1,1]))))
+# Add a line
+lines(0:15,I_original[,1,1], pch=18, col="blue", type="b", lty=2)
+# Add a legend
+legend("topright", legend=c("Sample", "Original"),
+       col=c("red", "blue"), lty=1:2, cex=0.8)
+```
+
+
