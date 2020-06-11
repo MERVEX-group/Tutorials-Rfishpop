@@ -57,7 +57,7 @@ ctrBio<-list(M=M,CV_M=0, L_inf=124.5, t0=0, k=0.164, CV_L=0, CV_LC=0, a=4.5*10^(
 ctrSEL<-list(type="Logistic", par=list(a50_Sel=1.5, ad_Sel=-1),CV_SEL=0)
 
 
-f=rep(0.5,number_years)
+f=matrix(rep(0.5,number_years),ncol=number_years,nrow=1,byrow=TRUE)
 ctrFish<-list(f=f,ctrSEL=ctrSEL)
 
 
@@ -133,8 +133,7 @@ ctrBio<-list(M=M,CV_M=0, L_inf=124.5, t0=0, k=0.164, CV_L=0.05, CV_LC=0, a=4.5*1
 
 ctrSEL<-list(type="Logistic", par=list(a50_Sel=1.5, ad_Sel=-1),CV_SEL=0)
 
-
-f=rep(0.5,number_years)
+f=matrix(rep(0.5,number_years),ncol=number_years,nrow=2,byrow=TRUE)
 ctrFish<-list(f=f,ctrSEL=ctrSEL)
 
 
@@ -173,7 +172,7 @@ lines(BIO$BIO[,,1], pch=18, col="blue", type="b", lty=2)
 # Add a legend
 legend("topleft", legend=c("BIO sample", "BIO"),
        col=c("red", "blue"), lty=1:2, cex=0.8)
-plot(B[,,2], type="b", pch=19, col="red", xlab="Years", ylab="Biomass",main="Sample biomass for niter=2, CV=0.10",ylim = c(3000,6000))
+plot(B[,,2], type="b", pch=19, col="red", xlab="Years", ylab="Biomass",main="Sample biomass for niter=2, CV=0.10",ylim = c(4500,7000))
 # Add a line
 lines(BIO$BIO[,,2], pch=18, col="blue", type="b", lty=2)
 # Add a legend
@@ -202,7 +201,6 @@ The arguments of this function are:
 
 - *Type* is an indicator of which distribution length must be computed, length stock distribution (Type="LengthS") or length captures distribution (Type="LengthC").
 
-- *scale*	 A rescale parameter, the matrix N (Type="LengthS") or C (Type="LengthC") is divided by this value to avoid large times of computation. This is, the number of values generated in each case is determined by the population size N/scale or by C/scale. If we don't need this argument we can use scale=NULL.
 
 The result is an array whose third dimension is the number of iterations, and the second one is the different years. Hence each column contains the distribution length (stock or captures) for each year.
 
@@ -211,7 +209,7 @@ We obtain the stock distribution length as follows.
 
 
 ```{r}
-L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthS",scale=NULL)
+L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthS")
 ```
 
 
@@ -226,7 +224,7 @@ LS<-Sum.Pop.Mod(Pop.Mod,c("LS"))
 Using the above lines of code only changing Type="LengthS" by Type="LengthC" we obtain the distribution of capture length.
 
 ```{r}
-L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthC",scale=NULL)
+L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthC")
 ```
 ```{r}
 L.D[,,1][,1]
@@ -245,7 +243,7 @@ Pop.Mod<-Population.Modeling(ctrPop=ctrPop,ctrBio=ctrBio,ctrFish=ctrFish,SR=SR)
 ```
 
 ```{r}
-L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthS",scale=NULL)
+L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthS")
 ```
 
 
@@ -256,7 +254,7 @@ LS<-Sum.Pop.Mod(Pop.Mod,c("LS"))
 
 
 ```{r}
-L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthC",scale=NULL)
+L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthC")
 ```
 ```{r}
 plot(L.D[,,1][,1], type="b", pch=19, col="red", xlab="", ylab="",main = "Distribution of capture length year 1980 iteration 1 at 1st of January ")
@@ -286,7 +284,7 @@ Pop.Mod<-Population.Modeling(ctrPop=ctrPop,ctrBio=ctrBio,ctrFish=ctrFish,SR=SR)
 ```
 
 ```{r}
-L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthC",scale=NULL)
+L.D<-Distribution.length(Pop.Mod,CV=0.2,Type="LengthC")
 our.sample<-Sampling_length(L.D,sample.size=100)
 plot(our.sample[,1,1],type="b", pch=19, col="red", xlab="Index", ylab="Capture length",main = "Sample capture length year 1980 iteration 1")
 ```

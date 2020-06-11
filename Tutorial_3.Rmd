@@ -55,7 +55,7 @@ ctrBio<-list(M=M,CV_M=0.2, L_inf=124.5, t0=0, k=0.164, CV_L=0.2, CV_LC=0.2, a=4.
 ctrSEL<-list(type="Logistic", par=list(a50_Sel=1.5, ad_Sel=-1),CV_SEL=0.2)
 
 
-f=rep(0.5,number_years)
+f=matrix(rep(0.5,number_years),ncol=number_years,nrow=2,byrow=TRUE)
 ctrFish<-list(f=f,ctrSEL=ctrSEL)
 
 
@@ -144,16 +144,16 @@ head(DPM[,,2])
 ### Reference Fishery Mortalities (RF function)
 
 
-The function *RF* returns the reference fishery mortality which produces maximum YPR, the reference fishery mortality at which the slope of the YPR curve is reduced to 0.1 of that estimated at the origin and the reference fishery mortality at which the MSY is attained. Furthermore for each of these fishery mortalities the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium is also returned. 
+The function *RF* returns the reference fishery mortality which produces maximum YPR, the reference fishery mortality at which the slope of the YPR curve is reduced to 0.1 of that estimated at the origin, the reference fishery mortality at which the MSY is attained and the reference fishery mortality which will drive the stock to extinction. Furthermore for each of these fishery mortalities the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium is also returned. 
 
-It is important to mention that if the fishing effort is equal to 10 can be that optimize process had not found the correct value in the default sequence.
+It is important to mention that if the fishing effort is equal to 10 can be that optimize process had not found the correct value in the default sequence (except for the reference fishery mortality which will drive the stock to extinction, it this case the sequence finish at 60).
 
 
 Some arguments coincide with those of BPR, YPR and BYR.eq functions, to avoid redundancy we focus on the new arguments. 
 
 - *Bio.years* is the number of recent years to estimate the mean of M, Mat, WC, and W (natural mortality, maturity, stock weight and capture weight).
 
-- *FM_type*	established which of the three reference fishery mortalities must be computed. The possibilities have been described above: FM_type="F_max", FM_type="F_0.1" and FM_type="F_msy".
+- *FM_type*	establishes which of the four reference fishery mortalities must be computed. The possibilities have been described above: FM_type="F_max", FM_type="F_0.1", FM_type="F_msy" and FM_type="F_Crash".
 
 - *iters* is a  vector containing the iteration for which the reference fishery mortalities must be computed.
 
@@ -166,13 +166,15 @@ The results depend on the selection done in *FM_type*.
 
 - *F_msy* is  the value of F at which the MSY is attained with the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium.
 
+- *F_Crash*	is the value of F which will drive the stock to extinction with the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium.
 
 The following lines of code allow us to compute the three reference mortalities for the two interactions.
 
 ```{r}
-a=RF(Pop.Mod, 3,3,Method="mean",par=NULL,FM_type="F_max",iters=1:2)
+RF(Pop.Mod, 3,3,Method="mean",par=NULL,FM_type="F_max",iters=1:2)
 RF(Pop.Mod, 3,3,Method="mean",par=NULL,FM_type="F_0.1",iters=1:2)
 RF(Pop.Mod, 3,3,Method="mean",par=NULL,FM_type="F_msy",iters=1:2)
+RF(Pop.Mod, 3,3,Method="mean",par=NULL,FM_type="F_Crash",iters=1:2)
 ```
 
 
@@ -194,7 +196,7 @@ ctrBio<-list(M=M,CV_M=0.01, L_inf=124.5, t0=0, k=0.164, CV_L=0, CV_LC=0, a=4.5*1
 
 ctrSEL<-list(type="Logistic", par=list(a50_Sel=1.5, ad_Sel=-1),CV_SEL=0)
 
-f=rep(0.5,number_years)
+f=matrix(rep(0.5,number_years),ncol=number_years,nrow=1000,byrow=TRUE)
 ctrFish<-list(f=f,ctrSEL=ctrSEL)
 
 a_RK=10; b_RK=0.0002; CV_REC_RK=0

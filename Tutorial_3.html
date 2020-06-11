@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
 
 <meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
@@ -330,7 +331,6 @@ summary {
   border: none;
   display: inline-block;
   border-radius: 4px;
-  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -401,7 +401,7 @@ ctrBio&lt;-list(M=M,CV_M=0.2, L_inf=124.5, t0=0, k=0.164, CV_L=0.2, CV_LC=0.2, a
 ctrSEL&lt;-list(type=&quot;Logistic&quot;, par=list(a50_Sel=1.5, ad_Sel=-1),CV_SEL=0.2)
 
 
-f=rep(0.5,number_years)
+f=matrix(rep(0.5,number_years),ncol=number_years,nrow=2,byrow=TRUE)
 ctrFish&lt;-list(f=f,ctrSEL=ctrSEL)
 
 
@@ -474,22 +474,22 @@ head(DPM[,,1])</code></pre>
 ## [6,] 0.05 0.048497156 0.08910358 1.678457 9761.686 869.8011 16384.57</code></pre>
 <pre class="r"><code>### Second iteration
 head(DPM[,,2])</code></pre>
-<pre><code>##         f           F        YPR      BPR        R         Y        B
-## [1,] 0.00 0.000000000 0.00000000 2.438833 9835.987    0.0000 23988.33
-## [2,] 0.01 0.009643763 0.02685948 2.315126 9827.223  263.9541 22751.26
-## [3,] 0.02 0.019287525 0.05092771 2.199912 9818.175  500.0171 21599.12
-## [4,] 0.03 0.028931288 0.07248510 2.092460 9808.837  710.9945 20524.60
-## [5,] 0.04 0.038575050 0.09178179 1.992114 9799.208  899.3889 19521.14
-## [6,] 0.05 0.048218813 0.10904128 1.898283 9789.283 1067.4360 18582.83</code></pre>
+<pre><code>##         f           F        YPR       BPR        R        Y         B
+## [1,] 0.00 0.000000000 0.00000000 1.2600474 9682.552   0.0000 12200.474
+## [2,] 0.01 0.009768011 0.01329979 1.1871435 9663.057 128.5166 11471.435
+## [3,] 0.02 0.019536023 0.02521128 1.1196317 9642.740 243.1058 10796.317
+## [4,] 0.03 0.029304034 0.03588292 1.0570282 9621.581 345.2504 10170.282
+## [5,] 0.04 0.039072046 0.04544571 0.9989000 9599.559 436.2588  9589.000
+## [6,] 0.05 0.048840057 0.05401551 0.9448582 9576.656 517.2879  9048.582</code></pre>
 </div>
 <div id="reference-fishery-mortalities-rf-function" class="section level3">
 <h3>Reference Fishery Mortalities (RF function)</h3>
-<p>The function <em>RF</em> returns the reference fishery mortality which produces maximum YPR, the reference fishery mortality at which the slope of the YPR curve is reduced to 0.1 of that estimated at the origin and the reference fishery mortality at which the MSY is attained. Furthermore for each of these fishery mortalities the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium is also returned.</p>
-<p>It is important to mention that if the fishing effort is equal to 10 can be that optimize process had not found the correct value in the default sequence.</p>
+<p>The function <em>RF</em> returns the reference fishery mortality which produces maximum YPR, the reference fishery mortality at which the slope of the YPR curve is reduced to 0.1 of that estimated at the origin, the reference fishery mortality at which the MSY is attained and the reference fishery mortality which will drive the stock to extinction. Furthermore for each of these fishery mortalities the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium is also returned.</p>
+<p>It is important to mention that if the fishing effort is equal to 10 can be that optimize process had not found the correct value in the default sequence (except for the reference fishery mortality which will drive the stock to extinction, it this case the sequence finish at 60).</p>
 <p>Some arguments coincide with those of BPR, YPR and BYR.eq functions, to avoid redundancy we focus on the new arguments.</p>
 <ul>
 <li><p><em>Bio.years</em> is the number of recent years to estimate the mean of M, Mat, WC, and W (natural mortality, maturity, stock weight and capture weight).</p></li>
-<li><p><em>FM_type</em> established which of the three reference fishery mortalities must be computed. The possibilities have been described above: FM_type=“F_max”, FM_type=“F_0.1” and FM_type=“F_msy”.</p></li>
+<li><p><em>FM_type</em> establishes which of the four reference fishery mortalities must be computed. The possibilities have been described above: FM_type=“F_max”, FM_type=“F_0.1”, FM_type=“F_msy” and FM_type=“F_Crash”.</p></li>
 <li><p><em>iters</em> is a vector containing the iteration for which the reference fishery mortalities must be computed.</p></li>
 </ul>
 <p>The results depend on the selection done in <em>FM_type</em>.</p>
@@ -497,10 +497,20 @@ head(DPM[,,2])</code></pre>
 <li><p><em>F_max</em> is the value of F that produces maximum YPR with the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium.</p></li>
 <li><p><em>F_0.1</em> is the value of F at which the slope of the YPR curve is reduced to 0.1 of that estimated at the origin with the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium.</p></li>
 <li><p><em>F_msy</em> is the value of F at which the MSY is attained with the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium.</p></li>
+<li><p><em>F_Crash</em> is the value of F which will drive the stock to extinction with the corresponding effort of fishing, YPR, BYR, B, Y and R in equilibrium.</p></li>
 </ul>
 <p>The following lines of code allow us to compute the three reference mortalities for the two interactions.</p>
-<pre class="r"><code>a=RF(Pop.Mod, 3,3,Method=&quot;mean&quot;,par=NULL,FM_type=&quot;F_max&quot;,iters=1:2)
-RF(Pop.Mod, 3,3,Method=&quot;mean&quot;,par=NULL,FM_type=&quot;F_0.1&quot;,iters=1:2)</code></pre>
+<pre class="r"><code>RF(Pop.Mod, 3,3,Method=&quot;mean&quot;,par=NULL,FM_type=&quot;F_max&quot;,iters=1:2)</code></pre>
+<pre><code>## , , 1
+## 
+##              f         F       YPR       BPR        R        Y        B
+## [1,] 0.3539752 0.3433358 0.2124446 0.5151772 9223.568 1959.497 4751.772
+## 
+## , , 2
+## 
+##              f         F       YPR      BPR        R        Y       B
+## [1,] 0.3091832 0.3020105 0.1187069 0.285997 8601.384 1021.044 2459.97</code></pre>
+<pre class="r"><code>RF(Pop.Mod, 3,3,Method=&quot;mean&quot;,par=NULL,FM_type=&quot;F_0.1&quot;,iters=1:2)</code></pre>
 <pre><code>## , , 1
 ## 
 ##              f         F      YPR       BPR        R       Y        B
@@ -509,7 +519,7 @@ RF(Pop.Mod, 3,3,Method=&quot;mean&quot;,par=NULL,FM_type=&quot;F_0.1&quot;,iters
 ## , , 2
 ## 
 ##              f         F       YPR       BPR        R        Y        B
-## [1,] 0.2280873 0.2206709 0.2343578 0.8897707 9550.446 2238.222 8497.707</code></pre>
+## [1,] 0.1984504 0.1938466 0.1123124 0.4537887 9118.533 1024.124 4137.887</code></pre>
 <pre class="r"><code>RF(Pop.Mod, 3,3,Method=&quot;mean&quot;,par=NULL,FM_type=&quot;F_msy&quot;,iters=1:2)</code></pre>
 <pre><code>## , , 1
 ## 
@@ -518,8 +528,18 @@ RF(Pop.Mod, 3,3,Method=&quot;mean&quot;,par=NULL,FM_type=&quot;F_0.1&quot;,iters
 ## 
 ## , , 2
 ## 
-##             f        F       YPR       BPR        R        Y        B
-## [1,] 0.398899 0.383811 0.2393533 0.5267986 9240.697 2211.792 4867.986</code></pre>
+##              f        F       YPR       BPR        R        Y        B
+## [1,] 0.2468558 0.241129 0.1169644 0.3681617 8913.521 1042.565 3281.617</code></pre>
+<pre class="r"><code>RF(Pop.Mod, 3,3,Method=&quot;mean&quot;,par=NULL,FM_type=&quot;F_Crash&quot;,iters=1:2)</code></pre>
+<pre><code>## , , 1
+## 
+##             f        F       YPR        BPR        R        Y         B
+## [1,] 1.568574 1.521427 0.1201562 0.04005195 12.97127 1.558578 0.5195246
+## 
+## , , 2
+## 
+##              f         F        YPR        BPR        R        Y        B
+## [1,] 0.9541681 0.9320325 0.08397685 0.04012001 29.91223 2.511935 1.200079</code></pre>
 <p>This function is time demanding due to the necessary optimization process. For this reason when we desire to compute for example the reference fishery mortalities for 1000 iterations we need to wait approximately 6 min. Internally, the function divide the work in block of 20 iterations and then start the process to compute the reference mortalities. An alternative is to use the function RF_U which is equivalent to the RF function but instead of dividing the 1000 iterations in blocks of 20 inside of the function we do this previously before to call the function. This alternative is faster, in 3 minutes approximately we have the results for 1000 iterations. Below we provide the code for both options for FM_type=“F_max”.</p>
 <pre class="r"><code>ctrPop&lt;-list(years=seq(1980,2020,by=1),niter=1000,N0=10000,ages=0:15,minFage=4,
              maxFage=7,ts=0,tc=0.5,seed=NULL)
@@ -535,7 +555,7 @@ ctrBio&lt;-list(M=M,CV_M=0.01, L_inf=124.5, t0=0, k=0.164, CV_L=0, CV_LC=0, a=4.
 
 ctrSEL&lt;-list(type=&quot;Logistic&quot;, par=list(a50_Sel=1.5, ad_Sel=-1),CV_SEL=0)
 
-f=rep(0.5,number_years)
+f=matrix(rep(0.5,number_years),ncol=number_years,nrow=1000,byrow=TRUE)
 ctrFish&lt;-list(f=f,ctrSEL=ctrSEL)
 
 a_RK=10; b_RK=0.0002; CV_REC_RK=0

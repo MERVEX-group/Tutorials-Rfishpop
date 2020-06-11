@@ -91,10 +91,10 @@ ctrBio<-list(M=M,CV_M=0.2, L_inf=124.5, t0=0, k=0.164, CV_L=0.2, CV_LC=0.2, a=4.
 
 The block **(3)** contains the fishing information. Below we describe each of the arguments in this block.
 
-Argument *f* is the annual component of fishing mortality $F = f * SEL$. In this case a constant vector equal to 0.5.
+Argument *f* is the annual component of fishing mortality $F = f * SEL$. Can be different for each of the iterations, hence we introduce a matrix whose rows contain the annual vector for each iteration. In this case a constant vector equal to 0.5.
 
 ```{r}
-f=rep(0.5,number_years)
+f=matrix(rep(0.5,number_years),ncol=number_years,nrow=2,byrow=TRUE)
 ```
 
 Argument *ctrSEL* specifies the selectivity function considered and the corresponding parameters. the different selectivity functions are:

@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
 
 <meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
@@ -330,7 +331,6 @@ summary {
   border: none;
   display: inline-block;
   border-radius: 4px;
-  background-color: transparent;
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li {
@@ -410,8 +410,8 @@ rownames(M)&lt;-ctrPop$ages</code></pre>
 <pre class="r"><code>ctrBio&lt;-list(M=M,CV_M=0.2, L_inf=124.5, t0=0, k=0.164, CV_L=0.2, CV_LC=0.2, a=4.5*10^(-6), b=3.1049,
            a50_Mat=3, ad_Mat=-0.5,CV_Mat=0.2)</code></pre>
 <p>The block <strong>(3)</strong> contains the fishing information. Below we describe each of the arguments in this block.</p>
-<p>Argument <em>f</em> is the annual component of fishing mortality <span class="math inline">\(F = f * SEL\)</span>. In this case a constant vector equal to 0.5.</p>
-<pre class="r"><code>f=rep(0.5,number_years)</code></pre>
+<p>Argument <em>f</em> is the annual component of fishing mortality <span class="math inline">\(F = f * SEL\)</span>. Can be different for each of the iterations, hence we introduce a matrix whose rows contain the annual vector for each iteration. In this case a constant vector equal to 0.5.</p>
+<pre class="r"><code>f=matrix(rep(0.5,number_years),ncol=number_years,nrow=2,byrow=TRUE)</code></pre>
 <p>Argument <em>ctrSEL</em> specifies the selectivity function considered and the corresponding parameters. the different selectivity functions are:</p>
 <ul>
 <li>Constant selectivity function. In <em>ctrSEL</em> we must specify it using <em>type=“cte”</em> argument, and then in argument <em>par</em> we must introduce the constant value, in this case 0.5. Furthermore, we also need to introduce the corresponding coefficient of variation <em>CV_SEL</em>. The values of the selectivity matrix comes from a uniform distribution with mean equal to “cte” and whose variability is determined by CV_SEL. In this case CV_SEL=0.2</li>
@@ -527,9 +527,18 @@ SR&lt;-list(type=&quot;RK&quot;,par=c(a_RK,b_RK,CV_REC_RK))</code></pre>
 ## 
 ## $ctrFish
 ## $ctrFish$f
-##  [1] 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5
-## [20] 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5 0.5
-## [39] 0.5 0.5 0.5
+##      [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13]
+## [1,]  0.5  0.5  0.5  0.5  0.5  0.5  0.5  0.5  0.5   0.5   0.5   0.5   0.5
+## [2,]  0.5  0.5  0.5  0.5  0.5  0.5  0.5  0.5  0.5   0.5   0.5   0.5   0.5
+##      [,14] [,15] [,16] [,17] [,18] [,19] [,20] [,21] [,22] [,23] [,24]
+## [1,]   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5
+## [2,]   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5
+##      [,25] [,26] [,27] [,28] [,29] [,30] [,31] [,32] [,33] [,34] [,35]
+## [1,]   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5
+## [2,]   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5   0.5
+##      [,36] [,37] [,38] [,39] [,40] [,41]
+## [1,]   0.5   0.5   0.5   0.5   0.5   0.5
+## [2,]   0.5   0.5   0.5   0.5   0.5   0.5
 ## 
 ## $ctrFish$ctrSEL
 ## $ctrFish$ctrSEL$type
@@ -563,7 +572,7 @@ SR&lt;-list(type=&quot;RK&quot;,par=c(a_RK,b_RK,CV_REC_RK))</code></pre>
 ## [1] 7
 ## 
 ## $seed
-## NULL
+## [1] 2450
 ## 
 ## $ts
 ## [1] 0
@@ -769,8 +778,8 @@ steepness_value</code></pre>
 ## 
 ## , , 2
 ## 
-##         [,1]
-## [1,] 0.92673</code></pre>
+##           [,1]
+## [1,] 0.9710035</code></pre>
 <ul>
 <li>We consider the Ricker Recruitment Model:</li>
 </ul>
@@ -787,7 +796,7 @@ steepness_value</code></pre>
 ## , , 2
 ## 
 ##          [,1]
-## [1,] 3.027047</code></pre>
+## [1,] 2.946845</code></pre>
 <ol start="2" style="list-style-type: decimal">
 <li>Now, we focus on type=“parameters”:</li>
 </ol>
@@ -807,8 +816,8 @@ parameters_value</code></pre>
 ## 
 ## , , 2
 ## 
-##          [,1]
-## [1,] 9994.359
+##         [,1]
+## [1,] 10059.5
 ## 
 ## 
 ## $b_BH
@@ -819,8 +828,8 @@ parameters_value</code></pre>
 ## 
 ## , , 2
 ## 
-##         [,1]
-## [1,] 388.351</code></pre>
+##          [,1]
+## [1,] 583.3767</code></pre>
 <ul>
 <li>We consider the Ricker Recruitment Model:</li>
 </ul>
@@ -838,7 +847,7 @@ parameters_value</code></pre>
 ## , , 2
 ## 
 ##          [,1]
-## [1,] 12.81781
+## [1,] 8.974351
 ## 
 ## 
 ## $b_RK
@@ -850,7 +859,7 @@ parameters_value</code></pre>
 ## , , 2
 ## 
 ##              [,1]
-## [1,] 0.0002175676</code></pre>
+## [1,] 0.0001931998</code></pre>
 <p>Note that if we want to use <em>Method=“own”</em> we nees to specify in argument <em>par</em> the required vectors. This must be something like (assuming that W, WC, M, Mat and SEL are defined previously).</p>
 <pre class="r"><code>par=list(); par$W&lt;-W; par$SEL&lt;-SEL; par$Mat&lt;-Mat; par$M&lt;-M
 steepness(Pop.Mod,3,3,type=&quot;parameters&quot;,h=2.34,Method=&quot;own&quot;,par=par)</code></pre>
