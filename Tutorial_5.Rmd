@@ -26,7 +26,7 @@ After these steps the next point is based on this assessment and the HCR (Havers
 management action (e.g., a change in the TAC). Fleet effort and catch are then modelled,
 and **resulting catches are fed back into the operating model**.
 
-<span style="color:red">NOTE: Our package does not implement a generic function implementing a HCR is not available yet but is coming.</span> 
+<span style="color:red">NOTE: Our package does not implement a generic function implementing a HCR yet but is coming.</span> 
 
 
 In this tutorial we focus on explaining the use of the <span style="color:blue">function to fed back into the operating model the resulting catches or fleet effort.</span> 
@@ -89,7 +89,7 @@ Assume that the resulting catches are 1500 then to extend our simulated Populati
 Pop.Mod1=Population.Modeling.Projections(Pop.Mod,new.years=2021,my.catch=1500,limit.f=NULL,tol=NULL,strategy="catch")
 ```
 
-Using Sum.Pop.Mod we can check if effectively the catches for 2021 is 1500.
+Using Sum.Pop.Mod we can check if effectively the catches for 2021 are 1500.
 
 
 ```{r}
@@ -99,11 +99,14 @@ Sum.Pop.Mod(Pop.Mod1,c("C"))
 Below, we can check the effort corresponding to such catches.
 
 ```{r}
-Pop.Mod1$Info$ctrFish$f
+EF=Pop.Mod1$Info$ctrFish$f
+colnames(EF)<-c(ctrPop$years,2021)
+rownames(EF)<-c("Iter 1","Iter 2")
+EF
 ```
 
 
-As we mentioned before we can check also the effect of reducing the effort any percentage. For example, the next line extend the Pop.Mod object reducing the effort to a 60% of the effort in the previous year 2020.
+As we mentioned before we can check also the effect of reducing the effort to any percentage of the effort in the previous year. For example, the next line extends the Pop.Mod object reducing the effort to a 60% of the effort in the previous year 2020.
 
 ```{r}
 Pop.Mod2=Population.Modeling.Projections(Pop.Mod,new.years=2021,my.effort=0.6,limit.f=NULL,tol=NULL,strategy="effort")
@@ -118,21 +121,26 @@ Sum.Pop.Mod(Pop.Mod2,c("C"))
 We can also access to the effort.
 
 ```{r}
-Pop.Mod2$Info$ctrFish$f
+EF=Pop.Mod2$Info$ctrFish$f
+colnames(EF)<-c(ctrPop$years,2021)
+rownames(EF)<-c("Iter 1","Iter 2")
+EF
 ```
 
 
-We can do the same of several years directly as follows.
+We can project our population through several years directly as follows. As you can see the population is extended two years, 2021 and 2022, and the corresponding catches for such years are 1500 and 1600, respectively.
 
 ```{r}
 Pop.Mod3=Population.Modeling.Projections(Pop.Mod,new.years=c(2021,2022),my.catch=c(1500,1600),limit.f=NULL,tol=NULL,strategy="catch")
 ```
 
+Again we can check that the resulting catches for such years are closed to the desired values 1500 and 1600, respectively.
+
 ```{r}
 Sum.Pop.Mod(Pop.Mod3,c("C"))
 ```
 
-We can also use tol	argument to increase the level of tolerence in the optimization process.
+We can also use tol	argument to increase the level of tolerance in the optimization process obtaining more accurate numbers. Note increasing the level of tolerance we also increase the time of computation. Although this function, as we mentioned previously, will be faster than now soon after an optimization process.
 
 ```{r}
 Pop.Mod3b=Population.Modeling.Projections(Pop.Mod,new.years=c(2021,2022),my.catch=c(1500,1600),limit.f=NULL,tol=0.001,strategy="catch")
@@ -160,6 +168,9 @@ Sum.Pop.Mod(Pop.Mod4,c("C"))
 We can see that the increase in natural mortality implies an increase in the effort required to obtain the same catches.
 
 ```{r}
-Pop.Mod4$Info$ctrFish$f
+EF=Pop.Mod4$Info$ctrFish$f
+colnames(EF)<-c(ctrPop$years,2021)
+rownames(EF)<-c("Iter 1","Iter 2")
+EF
 ```
 

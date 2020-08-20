@@ -25,11 +25,11 @@ management action is determined (e.g., a change in the TAC).
 
 <span style="color:red">NOTE: Our package does not implement any assessment models, the idea is to use available implementations
 of the assessment models. The package contains specific functions to change the format of the data into the required format
-of the assessment model function. Now, the package contains such functions for the data-poor methods, LBI and LB-SPR. The list of functions will be expanded when exploring the application of other assessment models to the data reported by our package. THE PACKAGE IS AN OPEN PROJECT AND NEW FUNCTIONS ARE INCLUDED CONSTANTLY. </span> 
+of the assessment model function. Now, the package contains such functions for the data-poor methods, LBI (Length Based Indicators) and LB-SPR (Length Based Spawning Potential Ratio). The list of functions will be expanded when exploring the application of other assessment models to the data reported by our package. THE PACKAGE IS AN OPEN PROJECT AND NEW FUNCTIONS ARE INCLUDED CONSTANTLY. </span> 
 
 
 In this tutorial we focus on explaining the use of the <span style="color:blue">functions for passsing the data to the LBI and LB-SPR methods.</span> 
-Furthermore, the package also contains a <span style="color:blue">function to define and fill a FLStock object</span>  using the information provided by the main function Population.Modeling in order to use any of the tools developed in the FLR project.
+Furthermore, the package also contains a <span style="color:blue">function to define and fill a FLStock object</span>  using the information provided by the main function Population.Modeling in order to use any of the tools developed in the FLR project. Therefore the tutorial finishes explaining this function.
 
 
 ### <span style="color:blue"> Data for Length Based Indicators (LBI)</span> 
@@ -73,25 +73,21 @@ SR<-list(type="BH",par=c(a_BH,b_BH,CV_REC_BH))
 Pop.Mod<-Population.Modeling(ctrPop=ctrPop,ctrBio=ctrBio,ctrFish=ctrFish,SR=SR)
 ```
 
-Then *Data.to.LBI* function is used to obtain the length distributions and average weight per length. NOTE that we access to the first element of the list which corresponds to the first iteration (in this case we only have one since niter=1, in other examples the next iterations are reported in the next elements of the list).
+Then *Data.to.LBI* function is used to obtain the length distributions and average weight per length. NOTE that in the next lines of code we access to the first element of the list which corresponds to the first iteration (in this case we only have one since niter=1, in other examples the next iterations are reported in the next elements of the list).
 
 ```{r}
 resul=Data.to.LBI(Pop.Mod,CV=0.2)
 freq=resul$length[[1]];head(freq)
 wal=resul$weight[[1]];head(wal)
 ```
-Furthermore, than the data provided by Data.to.LBI function the LBI method also needs some life history parameters. Below, we explain how to access to some of them.
+Furthermore than the data provided by Data.to.LBI function the LBI method also needs values for some life history parameters. Below, we explain how to access to some of them.
 
--  von Bertalanffy asymptotic length (Linf=$L_{\infty}$)
-```{r}
-L_inf=Pop.Mod$Info$ctrBio$L_inf 
-```
 
 - Parameters of Von Bertalanffy Growth Model.
 ```{r}
+L_inf=Pop.Mod$Info$ctrBio$L_inf 
 k=Pop.Mod$Info$ctrBio$k
 t0=Pop.Mod$Info$ctrBio$t0
-x50=Pop.Mod$Info$ctrBio$a50_Mat
 ```
 
 See details of the parameters using the following code.
@@ -103,17 +99,18 @@ See details of the parameters using the following code.
 - Now, we can use the Von Bertalanffy Growth Model to obtain the length at 50% maturity (L50=$L_{50}$).
 
 ```{r}
+x50=Pop.Mod$Info$ctrBio$a50_Mat
 L50=Length_VB(L_inf, k, x50, t0) 
 ```
 
-Since M is a constant through the year but age dependent, the natural mortality divided by von Bertalanffy k coefficient is computed as follows, using the mean of the age vector.
+Since M is constant through the year but age dependent, the natural mortality divided by von Bertalanffy k coefficient is computed as follows, using the mean of the age vector.
 
 ```{r}
 M.vec=Pop.Mod$Matrices$M[,1,1]
 MK <-mean(M.vec)/k
 ```
 
-Finally, running the following line of code, after load the required code, LBI are computed.
+Finally, running the following line of code, after load the required code and libraries, LBI are computed.
 
 ```{r, include=FALSE,message=FALSE, warning=FALSE}
 library(LBSPR) # se usan algunas funciones gráficas
@@ -174,7 +171,7 @@ Remember:
 The function **reports** the length distributions of catches for each year and iteration in our Pop.Mod object.
 
 
-<span style="color:red"> THE FUNCTION PROVIDES THE LENGTH DISTRIBUTION OF THE CATCHES AS THE PREVIOUS FUNCTION Data.to.LBI. THE DIFFERENCE IS THAT Data.to.LB.SPR DOES NOT PROVIDE THE AVERAGE WEIGHT PER LENGTH (not necessary here). ON THE OTHER HAND IN THE FOLLOWING EXAMPLE WE PROVIDE THE LINES OF CODE TO OBTAIN THE FORMAT REQUIRED BY THE LB-SPR IMPLEMENTATION. THIS LINES OF CODE ARE NOT INCLUDED IN THE FUNCTION BECAUSE TO CREATE THE REQUIRED OBJECT WE NEED TO FIX THE LIFE PARAMETERS AS WELL, AND THERE ARE A HUGE LIST OF PARAMETERS AND INFINITY POSSIBILITIES OF DEFINITION. THEN IT IS EASIER AND MORE FLEXIBLE IF WE PROVIDE THE REQUIRED LINES OF CODE OUTSIDE THE FUNCTION AND THE USER ONLY NEEDS TO FIX THE VALUES OF THE PARAMETERS AND RUN THE LINES.</span>
+<span style="color:red"> THE FUNCTION PROVIDES THE LENGTH DISTRIBUTION OF THE CATCHES AS THE PREVIOUS FUNCTION Data.to.LBI. THE DIFFERENCE IS THAT Data.to.LB.SPR DOES NOT PROVIDE THE AVERAGE WEIGHT PER LENGTH (not necessary here). ON THE OTHER HAND IN THE FOLLOWING EXAMPLE WE PROVIDE THE LINES OF CODE TO OBTAIN THE FORMAT REQUIRED BY THE LB-SPR IMPLEMENTATION. THESE LINES OF CODE ARE NOT INCLUDED IN THE FUNCTION BECAUSE TO CREATE THE REQUIRED OBJECT WE NEED TO FIX THE LIFE PARAMETERS AS WELL, AND THERE ARE A HUGE LIST OF PARAMETERS WHICH CAN BE FIXED AND INFINITY POSSIBILITIES OF DEFINITION. THEN IT IS EASIER AND MORE FLEXIBLE IF WE PROVIDE THE REQUIRED LINES OF CODE OUTSIDE THE FUNCTION. THE USER ONLY NEEDS TO FIX THE VALUES OF THE PARAMETERS AND RUN THE LINES.</span>
 
 
 To illustrate the practical use of the function we can use the population simulated previously.
@@ -183,7 +180,7 @@ To illustrate the practical use of the function we can use the population simula
 resul=Data.to.LB.SPR(Pop.Mod,CV=0.2)
 ```
 
-Some life history parameters have been defined previously in the LBI section. The length at 95% maturity (L95=$L_{95}$) is fixed below.
+Some life history parameters have been defined previously in the LBI section. The length at 95% maturity (L95=$L_{95}$) is fixed below. Note that first we use the logistic equation to obtain the age at 95% maturity, and then $L_{95}$.
 
 ```{r}
 xd=Pop.Mod$Info$ctrBio$ad_Mat
@@ -198,13 +195,13 @@ First of all we create the object LB_pars.
 ```{r}
 MyPars <- new("LB_pars")
 MyPars@Species <- "MySpecies"
-MyPars@Linf <- L_inf
-MyPars@L50 <-L50 #Length at 50% maturity (L50)
-MyPars@L95 <-L95 #Length at 95% maturity (L95)
-MyPars@MK <-MK  #the natural mortality divided by von Bertalanffy k coefficient
+MyPars@Linf <- L_inf # von Bertalanffy asymptotic length
+MyPars@L50 <-L50     # Length at 50% maturity (L50)
+MyPars@L95 <-L95     # Length at 95% maturity (L95)
+MyPars@MK <-MK       # The natural mortality divided by von Bertalanffy k #coefficient
 ```
 
-Now, we need to add such information to the length distribution as follows.
+We need to add such information to the length distribution as follows.
 
 ```{r}
 freq=resul[[1]]
@@ -241,10 +238,10 @@ resul_FLStock
 ```
 
 <span style="color:red"> 
-The advantage of being able to transfer the information from Pop.mod to a FLStock object is that now we can use tools developed in the FLR project.</span> 
+The advantage of being able to transfer the information from Pop.Mod object to a FLStock object is that now we can use tools developed in the FLR project.</span> 
 
 
-For example, we can apply code/tools of the tutorial "Modelling stock recruitment with FLSR" of FLR project to population created using Rfishpop package.
+For example, we can apply code/tools of the tutorial "Modelling stock recruitment with FLSR" of FLR project to our population created using Rfishpop package.
 
 Initially, the libraries need to be called.
 
@@ -288,7 +285,7 @@ summary(p4sr)
 ```
 
 
-Fitting an SR model
+Fitting an SR model.
 
 
 ```{r,message=FALSE,warning=FALSE}
@@ -304,11 +301,11 @@ plot(p4sr)
 
 
 
-Of course this is only one example but any tools of FLR project can be used. Below we reproduce also the some code of "Short Term Forecasting for advice using FLash" tutorial of FLR project.
+Of course this is only one example but any tools of FLR project can be used. Below we apply also some code of "Short Term Forecasting for advice using FLash" tutorial of FLR project.
 
+Load the required packages.
 
 ```{r}
-# Load the required packages
 library(FLAssess)
 library(FLash)
 library(ggplotFL)
