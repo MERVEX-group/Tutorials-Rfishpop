@@ -27,6 +27,7 @@ management action is determined (e.g., a change in the TAC).
 of the assessment models. The package contains specific functions to change the format of the data into the required format
 of the assessment model function. Now, the package contains such functions for the data-poor methods, LBI (Length Based Indicators) and LB-SPR (Length Based Spawning Potential Ratio). The list of functions will be expanded when exploring the application of other assessment models to the data reported by our package. THE PACKAGE IS AN OPEN PROJECT AND NEW FUNCTIONS ARE INCLUDED CONSTANTLY. </span> 
 
+<span style="color:red">WARNING: Due to the open ISSUES than the user can see in the corresponding page we recommend to be careful with the interpretation of the results corresponding with the application of the assessment models.</span> 
 
 In this tutorial we focus on explaining the use of the <span style="color:blue">functions for passsing the data to the LBI and LB-SPR methods.</span> 
 Furthermore, the package also contains a <span style="color:blue">function to define and fill a FLStock object</span>  using the information provided by the main function Population.Modeling in order to use any of the tools developed in the FLR project. Therefore the tutorial finishes explaining this function.
